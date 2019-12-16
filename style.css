@@ -1,0 +1,24 @@
+html, body{
+    margin:0;
+    height: 100%;
+}canvas{
+    height: 100%;
+    background:black; 
+}
+.Disc{
+    position: absolute;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    background-color: rgb(3,3,3);
+}
+#force{
+    position: absolute;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    background: blue;
+    top:470px;
+    right: 470px;
+    opacity: 0.5;
+}
