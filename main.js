@@ -5,20 +5,26 @@ canvas.height=window.innerHeight;
 
 var context=canvas.getContext('2d');
 
+
+window.addEventListener('resize',function(){
+    canvas.width=window.innerWidth;
+    canvas.height=window.innerHeight;
+})
 class Particle{
     constructor(x,y,vx,vy){
         //values init
         this.pos=new PVector(x,y);
         this.v =new PVector(vx,vy);
-        this.a =new PVector(0,0.05);
-        this.m=2;
+        this.a =new PVector(0,0);
+        this.m=(Math.random() * 15) +5;
         this.life_time=1;
         this.radius=5;
     }
     update(){
         this.v.add(this.a);
         this.pos.add(this.v);
-        this.life_time-=0.008;
+        this.a.mult(0);
+        this.life_time-=0.002;
     }
     draw(){
         context.beginPath();
@@ -32,11 +38,16 @@ class Particle{
         context.stroke();
     }
     isDead(){
-        if (this.timeToLive < 0) {
+        if (this.life_time < 0) {
             return true;
         } else {
             return false;
         }
+    }
+    force_apply(force){
+        var f = force.get();
+        f.div(this.m);
+        this.a.add(f);
     }
     run(){
         this.update();
@@ -46,7 +57,7 @@ class Particle{
 
 class Emiter{
     constructor(){
-        this.pos=this.pos=new PVector(window.innerWidth/2,window.innerHeight*0.2)
+        this.pos=this.pos=new PVector(window.innerWidth/2,window.innerHeight/2);
         this.particles=[];
     }
 
@@ -58,17 +69,68 @@ class Emiter{
             var p = this.particles[i];
             p.run();
             if (p.isDead()) {
-                particles.splice(i, 1);
+                p=null;
+                this.particles.splice(i, 1);
             }
         }
     }
+    addAttractor(attr){
+        for (var i = 0; i < this.particles.length; i++) {
+            var p = this.particles[i];
+            var force = attr.force_calc(p);
+            p.force_apply(force);
+        }
+    }
+}
+
+class Attractor{
+    constructor(){
+        this.pos=new PVector(window.innerWidth/2,window.innerHeight/2);
+        this.power=100;
+        
+    }
+    force_calc(particle){
+        // Calculate direction of force
+        var dir = PVector.sub(this.pos, particle.pos); 
+        // Distance between objects
+        var d = dir.mag();
+        // Normalize direction vector 
+        dir.normalize();
+        // Keep distance within a reasonable range
+        //d = constrain(d, 1, 100);    
+        // Repelling force is inversely proportional to distance
+        if (d>15){
+            var force = this.power/ (d * d);  
+        }else{
+            var force=0;
+        }     
+        // Get force vector --> magnitude * direction
+        dir.mult(force);                                  
+        return dir;
+    }
+    
 }
 var emiter=new Emiter();
+var attr=new Attractor();
 function animate(){
     requestAnimationFrame(animate);
     context.clearRect(0,0,innerWidth, innerHeight);
-    emiter.run();
+
+    context.beginPath();
+        context.arc(window.innerWidth/2,window.innerHeight/2,10,0,Math.PI * 2,false);
+        context.shadowColor ='red';
+        context.shadowBlur = 20;
+        context.fillStyle='red';
+        context.strokeStyle='red';
+        context.globalAlpha=1;
+        context.fill();
+        context.stroke();
+
+    emiter.addAttractor(attr);
     emiter.addParticle();
+    emiter.run();
+    
+    
 };
 
 animate();
